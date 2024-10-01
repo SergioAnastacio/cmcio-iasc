@@ -32,7 +32,7 @@ jobs:
         run: terraform apply -auto-approve tfplan
 
       - name: Verify Andible Inventory File
-        run: cat hosts.ini
+        run: cat inventory.ini
 
       - name: Set up Ansible
         run: sudo apt install -y ansible
@@ -48,12 +48,12 @@ jobs:
         run: chmod 600 ~/.ssh/id_rsa.pem
 
       - name: Install K0s with Ansible Playbook
-        run: ansible-playbook -i hosts.ini ansible/install_k0s.yml
+        run: ansible-playbook -i inventory.ini ansible/install_k0s.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: 'false'
 
       - name: Setup ControlPlane wirh Ansible Playbook
-        run: ansible-playbook -i hosts.ini ansible/setup_controllplane.yml
+        run: ansible-playbook -i inventory.ini ansible/setup_controllplane.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: 'false'
       
