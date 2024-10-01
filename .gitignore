@@ -1,0 +1,30 @@
+# Ansible
+*.retry
+*.log
+*.cfg
+*.vault
+*.yaml~
+*.yml~
+*.json~
+*.retry~
+*.log~
+*.cfg~
+*.vault~
+*.yaml.swp
+*.yml.swp
+*.json.swp
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+*.tfplan.*
+.crash
+*.log
+*.backup
+*.override
+*.terraformrc
+terraform.rc
+.terraform/

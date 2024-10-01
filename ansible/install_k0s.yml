@@ -1,0 +1,139 @@
+---
+- name: install base k0s
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: check if k0s is already installed
+      stat:
+        path: /usr/local/bin/k0s
+      register: k0s_installed
+
+    - name: Install dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - curl
+        - apt-transport-https
+        - ca-certificates
+
+    - name: Download k0s binary
+      get_url:
+        url: https://github.com/k0sproject/k0s/releases/download/v1.30.4+k0s.0/k0s-v1.30.4+k0s.0-amd64
+        dest: /usr/local/bin/k0s
+        mode: '0755'
+      when: not k0s_installed.stat.exists
+        
+    - name: Set up permissions
+      command: chmod +x /usr/local/bin/k0s
+      when: not k0s_installed.stat.exists
+
+- name: setup k0s on master node
+  hosts: controlplane
+  become: yes
+  tasks:
+    - name: Create k0s directory
+      shell: k0s config create > k0s.yaml
+    
+    - name: Create k0s configuration file
+      shell: k0s install controller -c k0s.yaml
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+    
+    - name: start k0s as a service
+      shell: systemctl start k0scontroller
+    
+    - name: enable k0s service
+      shell: systemctl enable k0scontroller
+
+    - name: Create environment variable
+      shell: echo 'export clusterUser=cmcio' >> /etc/profile.d/clusterUser.sh
+
+    - name: Make a dir for environment
+      file:
+        path: /root/.kube
+        state: directory
+        mode: '0755'
+
+    - name: Create a kubeconfig file
+      shell: k0s kubeconfig create --groups "system:masters" cmcio > /root/.kube/config
+
+    - name: Install kubectl on the master
+      snap:
+        name: kubectl
+        classic: yes
+
+    - name: setup rolebinding
+      shell: kubectl create clusterrolebinding cmcio-admin-binding --clusterrole=admin --user=cmcio --request-timeout=60s
+    
+    - name: create token for joining worker nodes
+      shell: k0s token create --role worker
+      register: worker_token
+    
+    - name: save worker token on controller machine
+      copy:
+        content: "{{ worker_token.stdout }}"
+        dest: /tmp/worker_token
+        mode: '0644'
+
+    - name: fetch worker token to local machine
+      fetch:
+        src: /tmp/worker_token
+        dest: ./worker_token
+        flat: yes
+        
+    - name: Ensure .kube directory exists for user
+      file:
+        path: /home/{{ ansible_user }}/.kube
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Copy kubeconfig to user .kube directory
+      copy:
+        src: /root/.kube/config
+        dest: /home/{{ ansible_user }}/.kube/config
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+        remote_src: yes
+
+    - name: Set ownership and permissions for kubeconfig
+      file:
+        path: /home/{{ ansible_user }}/.kube/config
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'   
+
+    - name: Verify Kubernetes cluster accessibility
+      shell: kubectl cluster-info
+      register: cluster_info
+      retries: 5
+      delay: 10
+      until: cluster_info is succeeded
+
+- name: setup k0s on worker node
+  hosts: nodes
+  become: yes
+  tasks:
+    - name: copy worker token to worker nodes
+      copy:
+        src: ./worker_token
+        dest: /tmp/worker_token
+
+    - name: Join worker node to the cluster
+      shell: k0s install worker --token-file /tmp/worker_token
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Start k0s worker
+      command: systemctl start k0sworker
+
+    - name: Enable k0s worker to start on boot
+      command: systemctl enable k0sworker
+
+    
