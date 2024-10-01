@@ -18,38 +18,13 @@
       retries: 8
       delay: 10
 
-    
-    - name: Create ArgoCD application YAML
-      copy:
-        content: |
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
-          metadata:
-            name: myapp
-            namespace: argocd
-          spec:
-            project: default
-            source:
-              repoURL: https://github.com/SergioAnastacio/test-frontend
-              targetRevision: HEAD
-              path: dev
-            destination:
-              server: 'https://kubernetes.default.svc'
-              namespace: myapp
-            syncPolicy:
-              syncOptions:
-              - CreateNamespace=true
-              automated:
-                prune: true
-                selfHeal: true
-        dest: ~/app-cd.yaml
-        mode: '0644'
-
-    - name: Apply the ArgoCD application YAML
-      shell: kubectl apply -f ~/app-cd.yaml
-      retries: 5
+    - name: Wait for ArgoCD CRDs to be created
+      shell: kubectl get crds | grep argoproj.io
+      register: crds_check
+      retries: 10
       delay: 10
-
+      until: crds_check.stdout.find('applications.argoproj.io') != -1
+    
     - name: Expose ArgoCD service on NodePort
       shell: |
         kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort", "ports": [{"port": 80, "targetPort": 8080, "nodePort": 30080}]}}'
@@ -91,40 +66,3 @@
       register: nginx_svc
       retries: 5
       delay: 5
-#   - name: Expose ArgoCD service
-#      shell: |
-#        kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort", "ports": [{"port": 80, "targetPort": 8080, "nodePort": 30088}]}'
-#      retries: 5
-#      delay: 5
-#
-#    - name: Get NodePort of ArgoCD service
-#      shell: kubectl get svc argocd-server -n argocd -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}'
-#      register: argocd_nodeport
-#      retries: 5
-#      delay: 5
-#
-#    - name: Debug ArgoCD NodePort
-#      debug:
-#        msg: "ArgoCD NodePort is {{ argocd_nodeport.stdout }}"
-#
-#- name: Install Istio control
-#  hosts: master
-#  become: yes
-#  tasks:
-#        - name: Download Istio Version 1.23.0
-#          shell: curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.0 sh -
-#          args:
-#            chdir: /tmp
-#
-#        - name: Move istioctl to /usr/local/bin
-#          shell: mv /tmp/istio-1.23.0/bin/istioctl /usr/local/bin/istioctl
-#
-#        - name: Verify istioctl installation
-#          shell: istioctl version
-#
-#        - name: Install Istio
-#          shell: istioctl install --set profile=demo -y
-#
-#        - name: inject Istio into the dev namespace
-#          shell: kubectl label namespace dev istio-injection=enabled
-      

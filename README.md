@@ -1,3 +1,4 @@
+[![Infrastructure As Code with Terraform and Ansible](https://github.com/SergioAnastacio/cmcio-iasc/actions/workflows/main.yml/badge.svg)](https://github.com/SergioAnastacio/cmcio-iasc/actions/workflows/main.yml)
 # Proyecto de Ansible y Terraform
 
 ## Descripción
