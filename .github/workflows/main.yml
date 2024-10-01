@@ -41,7 +41,7 @@ jobs:
         run: mkdir -p ~/.ssh
 
       - name: Decode SSH private key
-        run: echo "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 --decode > ~/.ssh/id_rsa.pem
+        run: echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa.pem
         shell: bash
 
       - name: Set permissions for SSH private key
