@@ -1,4 +1,28 @@
 ---
+- name: Install Utils
+  hosts: controlplane
+  become: yes
+  tasks:
+    - name: Install Subversion (SVN)
+      apt:
+        name: subversion
+        state: present
+
+- name: Install Ingress Controller
+  hosts: controlplane
+  become: yes
+  tasks:
+    - name: Instala ingress de nginx  ingress controller
+      shell:  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/baremetal/deploy.yaml
+      retries: 5
+      delay: 5
+      
+    - name: Debug Nodeport of nginx ingress controller
+      shell: kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}'
+      register: nginx_svc
+      retries: 5
+      delay: 5
+
 - name: Install ArgoCD control
   hosts: controlplane
   become: yes
@@ -12,7 +36,7 @@
       retries: 5
       delay: 10
       until: cluster_info is succeeded
-    
+
     - name: Apply manifest of ArgoCD
       shell: kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
       retries: 8
@@ -41,28 +65,16 @@
       debug:
         msg: "ArgoCD NodePort is {{ argocd_nodeport.stdout }}"
     
-    - name: Get initial password for acces argocd
-      shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-      register: argocd_password
-      retries: 5
-      delay: 5
-
-    - name: Debug ArgoCD password
-      debug:
-        msg: "ArgoCD password is {{ argocd_password.stdout }}"
-
-    - name: Instala ingress de nginx  ingress controller
-      shell:  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/baremetal/deploy.yaml
-      retries: 5
-      delay: 5
-
-    - name: Add Anotation to ingress
-      shell: kubectl -n ingress-nginx annotate ingressclasses nginx ingressclass.kubernetes.io/is-default-class="true"
+    - name : get ArgoCD Manifests
+      shell: svn export https://github.com/SergioAnastacio/cmcio-argocd/tree/main/argo-manifest
+      args:
+        creates: ~/argo-manifest
+      
+    - name: Apply all ArgoCD CLI manifest from /argo-manifest to Sync
+      shell: kubectl apply -f ~/argo-manifest .
       retries: 5
       delay: 5
       
-    - name: Debug Nodeport of nginx ingress controller
-      shell: kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}'
-      register: nginx_svc
-      retries: 5
-      delay: 5
+
+
+    
