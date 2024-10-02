@@ -17,8 +17,6 @@
   hosts: controlplane
   become: yes
   tasks:
-    - name: Create namespace for ArgoCD
-      shell: kubectl create namespace argocd
     
     - name: Verify Kubernetes cluster accessibility
       shell: kubectl cluster-info
@@ -26,6 +24,9 @@
       retries: 5
       delay: 10
       until: cluster_info is succeeded
+
+    - name: Create namespace for ArgoCD
+      shell: kubectl create namespace argocd
 
     - name: Apply manifest of ArgoCD
       shell: kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
