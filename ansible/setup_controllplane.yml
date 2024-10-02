@@ -1,17 +1,4 @@
 ---
-- name: Install Utils
-  hosts: controlplane
-  become: yes
-  tasks:
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-
-    - name: Install Subversion (SVN)
-      apt:
-        name: subversion
-        state: present
-
 - name: Install Ingress Controller
   hosts: controlplane
   become: yes
@@ -26,7 +13,6 @@
       register: nginx_svc
       retries: 5
       delay: 5
-
 - name: Install ArgoCD control
   hosts: controlplane
   become: yes
