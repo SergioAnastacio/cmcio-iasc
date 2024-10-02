@@ -13,6 +13,11 @@
       register: nginx_svc
       retries: 5
       delay: 5
+    
+    - name: Debug Nodeport of nginx ingress controller
+      debug:
+        msg: "NodePort of nginx ingress controller is {{ nginx_svc.stdout }}"
+
 - name: Install ArgoCD control
   hosts: controlplane
   become: yes
