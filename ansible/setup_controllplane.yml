@@ -12,6 +12,11 @@
       shell: kubectl -n ingress-nginx annotate ingressclasses nginx ingressclass.kubernetes.io/is-default-class="true"
       retries: 5
       delay: 5
+    - name: Expose ingress Controller NodePot
+      shell: |
+        kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec": {"type": "NodePort", "ports": [{"port": 80, "targetPort": 80, "nodePort": 32766}]}}'
+      retries: 5
+      delay: 10 
 
     - name: Debug Nodeport of nginx ingress controller
       shell: kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}'
@@ -65,6 +70,12 @@
     - name: Debug ArgoCD NodePort
       debug:
         msg: "ArgoCD NodePort is {{ argocd_nodeport.stdout }}"
+
+    - name: Apply CD Manifest for cmcio-frontend dev on argocd
+      shell: kubectl apply -f https://raw.githubusercontent.com/SergioAnastacio/cmcio-argocd/refs/heads/main/argo-manifest/application.yaml
+      retries: 5
+      delay: 5
+
 
 
 

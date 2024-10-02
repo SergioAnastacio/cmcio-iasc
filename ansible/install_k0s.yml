@@ -3,20 +3,18 @@
   hosts: all
   become: yes
   tasks:
+    - name: Actualizar la caché de apt
+      apt:
+        update_cache: yes
+
+    - name: Actualizar todos los paquetes instalados a sus versiones más recientes
+      apt:
+        upgrade: dist
 
     - name: check if k0s is already installed
       stat:
         path: /usr/local/bin/k0s
       register: k0s_installed
-
-    - name: Install dependencies
-      apt:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - curl
-        - apt-transport-https
-        - ca-certificates
 
     - name: Download k0s binary
       get_url:
