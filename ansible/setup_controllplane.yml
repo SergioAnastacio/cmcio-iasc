@@ -3,8 +3,14 @@
   hosts: controlplane
   become: yes
   tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
     - name: Install Subversion (SVN)
-      shell: apt-get install subversion
+      apt:
+        name: subversion
+        state: present
 
 - name: Install Ingress Controller
   hosts: controlplane
