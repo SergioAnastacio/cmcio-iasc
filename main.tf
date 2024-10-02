@@ -208,7 +208,7 @@ resource "aws_security_group" "nodes-sg-cmcio" {
   # kube-apiserver
   ingress{
     description = "kube-apiserver"
-    from_port   = 6443 
+    from_port   = 6442 
     to_port     = 6443 
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
