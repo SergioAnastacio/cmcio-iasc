@@ -278,7 +278,7 @@ resource "aws_lb" "lb-cmcio" {
 # Target Group
 resource "aws_lb_target_group" "lb-tg-cmcio" {
   name     = "lb-tg-cmcio"
-  port     = 32766
+  port     = 80
   protocol = "HTTP"
   vpc_id   = aws_vpc.vpc-cmcio.id
 
@@ -307,7 +307,7 @@ resource "aws_lb_listener" "lb-l-cmcio" {
 resource "aws_lb_target_group_attachment" "example" {
   target_group_arn = aws_lb_target_group.lb-tg-cmcio.arn
   target_id        = aws_instance.nodes.id
-  port             = 80
+  port             = 32766
 }
 
 #Obtener el dns del load balancer
