@@ -4,9 +4,7 @@
   become: yes
   tasks:
     - name: Install Subversion (SVN)
-      apt:
-        name: subversion
-        state: present
+      shell: apt-get install subversion
 
 - name: Install Ingress Controller
   hosts: controlplane
@@ -74,7 +72,7 @@
       shell: kubectl apply -f ~/argo-manifest .
       retries: 5
       delay: 5
-      
+
 
 
     
