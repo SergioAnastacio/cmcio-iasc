@@ -54,16 +54,6 @@
     - name: Debug ArgoCD NodePort
       debug:
         msg: "ArgoCD NodePort is {{ argocd_nodeport.stdout }}"
-    
-    - name : get ArgoCD Manifests
-      shell: svn export https://github.com/SergioAnastacio/cmcio-argocd/tree/main/argo-manifest
-      args:
-        creates: ~/argo-manifest
-      
-    - name: Apply all ArgoCD CLI manifest from /argo-manifest to Sync
-      shell: kubectl apply -f ~/argo-manifest .
-      retries: 5
-      delay: 5
 
 
 

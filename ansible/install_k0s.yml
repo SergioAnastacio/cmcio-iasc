@@ -17,7 +17,6 @@
         - curl
         - apt-transport-https
         - ca-certificates
-        - subversion
 
     - name: Download k0s binary
       get_url:
