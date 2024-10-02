@@ -324,7 +324,7 @@ resource "aws_instance" "ControlPlane" {
     aws_security_group.common-sg-cmcio.id,
     aws_security_group.controlplane-sg-cmcio.id    
     ] # Grupo de seguridad
-  associate_public_ip_address = false # Asigna una IP publica
+  associate_public_ip_address = true # Asigna una IP publica
   key_name =  var.key_name # Nombre del par de claves en AWS
   tags = {
     Name = "ControlPlane"
@@ -336,18 +336,8 @@ resource "aws_instance" "ControlPlane" {
     echo "[nodes]" >> inventory.ini
     EOT
   }
-   depends_on = [aws_eip_association.controlplane_eip_assoc]
-}
-# Crear una Elastic IP
-resource "aws_eip" "controlplane_eip" {
-  associate_with_private_ip = true
 }
 
-# Asociar la Elastic IP a la instancia de ControlPlane
-resource "aws_eip_association" "controlplane_eip_assoc" {
-  instance_id   = aws_instance.ControlPlane.id
-  allocation_id = aws_eip.controlplane_eip.id
-}
 # ! Salida de la IP publica de las instancias
   output "master_public_ip" {
     value = "${aws_instance.ControlPlane.public_ip}"
