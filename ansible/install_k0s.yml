@@ -3,13 +3,15 @@
   hosts: all
   become: yes
   tasks:
-    - name: Actualizar la caché de apt
+  
+    - name: Install dependencies
       apt:
-        update_cache: yes
-
-    - name: Actualizar todos los paquetes instalados a sus versiones más recientes
-      apt:
-        upgrade: dist
+        name: "{{ item }}"
+        state: present
+      loop:
+        - curl
+        - apt-transport-https
+        - ca-certificates
 
     - name: check if k0s is already installed
       stat:
