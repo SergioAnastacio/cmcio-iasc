@@ -70,7 +70,9 @@
     - name: Debug ArgoCD NodePort
       debug:
         msg: "ArgoCD NodePort is {{ argocd_nodeport.stdout }}"
-
+    
+    - name: Test Apply crd from gist
+      shell: kubectl apply -f https://gist.githubusercontent.com/SergioAnastacio/0ae57760fb9e3b3312f6a72fb3eeebaf/raw/daeab19619deb78e995126a55ca6529d9ba1a723/test.yaml
     
 
 
