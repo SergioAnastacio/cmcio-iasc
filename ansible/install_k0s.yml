@@ -10,13 +10,15 @@
           - apt-transport-https
           - ca-certificates
           - python3-pip
+          - python3-venv
         state: present
         update_cache: yes
 
-    - name: Install kubernetes Python library
-      pip:
-        name: kubernetes
-        state: present
+    - name: Create a Python virtual environment
+      command: python3 -m venv /opt/venv
+
+    - name: Install kubernetes Python library in virtual environment
+      command: /opt/venv/bin/pip install kubernetes
 
     - name: Check if k0s is already installed
       stat:
