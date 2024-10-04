@@ -3,44 +3,28 @@
   hosts: controlplane
   become: yes
   tasks:
-    - name: Set nginx ingress class as default
-      k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: IngressClass
-          metadata:
-            name: nginx
-            annotations:
-              ingressclass.kubernetes.io/is-default-class: "true"
+    - name: Instala ingress de nginx  ingress controller
+      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.2/deploy/static/provider/baremetal/deploy.yaml
       retries: 5
-      delay: 10
+      delay: 5
 
-    - name: Expose ingress Controller NodePort
-      k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: ingress-nginx-controller
-            namespace: ingress-nginx
-          spec:
-            type: NodePort
-            ports:
-              - port: 80
-                targetPort: 80
-                nodePort: 32766
+    - name: Anotation for ingress controller
+      shell: kubectl -n ingress-nginx annotate ingressclasses nginx ingressclass.kubernetes.io/is-default-class="true"
       retries: 5
-      delay: 10
+      delay: 5
+    - name: Expose ingress Controller NodePot
+      shell: |
+        kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec": {"type": "NodePort", "ports": [{"port": 80, "targetPort": 80, "nodePort": 32766}]}}'
+      retries: 5
+      delay: 10 
 
-    - name: Debug NodePort of nginx ingress controller
+    - name: Debug Nodeport of nginx ingress controller
       shell: kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}'
       register: nginx_svc
       retries: 5
       delay: 5
-
-    - name: Debug NodePort of nginx ingress controller
+    
+    - name: Debug Nodeport of nginx ingress controller
       debug:
         msg: "NodePort of nginx ingress controller is {{ nginx_svc.stdout }}"
 
@@ -48,6 +32,7 @@
   hosts: controlplane
   become: yes
   tasks:
+    
     - name: Verify Kubernetes cluster accessibility
       shell: kubectl cluster-info
       register: cluster_info
@@ -56,19 +41,10 @@
       until: cluster_info is succeeded
 
     - name: Create namespace for ArgoCD
-      k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Namespace
-          metadata:
-            name: argocd
+      shell: kubectl create namespace argocd
 
     - name: Apply manifest of ArgoCD
-      k8s:
-        state: present
-        src: https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-        namespace: argocd
+      shell: kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
       retries: 8
       delay: 10
 
@@ -78,22 +54,10 @@
       retries: 10
       delay: 10
       until: crds_check.stdout.find('applications.argoproj.io') != -1
-
+    
     - name: Expose ArgoCD service on NodePort
-      k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: argocd-server
-            namespace: argocd
-          spec:
-            type: NodePort
-            ports:
-              - port: 80
-                targetPort: 8080
-                nodePort: 30080
+      shell: |
+        kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort", "ports": [{"port": 80, "targetPort": 8080, "nodePort": 30080}]}}'
       retries: 5
       delay: 10
 
@@ -107,7 +71,9 @@
       debug:
         msg: "ArgoCD NodePort is {{ argocd_nodeport.stdout }}"
 
-    - name: Apply CD Manifest for cmcio-frontend dev on argocd
-      shell: kubectl apply -f https://raw.githubusercontent.com/SergioAnastacio/cmcio-argocd/refs/heads/main/argo-manifest/application.yaml
-      retries: 5
-      delay: 5
+    
+
+
+
+
+    
