@@ -106,3 +106,8 @@
     - name: Debug ArgoCD NodePort
       debug:
         msg: "ArgoCD NodePort is {{ argocd_nodeport.stdout }}"
+
+    - name: Apply CD Manifest for cmcio-frontend dev on argocd
+      shell: kubectl apply -f https://raw.githubusercontent.com/SergioAnastacio/cmcio-argocd/refs/heads/main/argo-manifest/application.yaml
+      retries: 5
+      delay: 5
